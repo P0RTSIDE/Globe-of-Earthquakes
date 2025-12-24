@@ -15,12 +15,31 @@
     <nav>
       <a href="/">Sphere</a>
       <ul>
-        <li>Explore</li>
-        <li>Create</li>
+        <li>Interactive</li>
+        <li>Real-time Data</li>
       </ul>
     </nav>
-    <h1 class="title">Give it a spin.</h1>
-    <div class="footer">
+    <h1 class="title">Earthquake Globe</h1>
+    <div class="earthquake-info">
+      <div class="info-item">
+        <span class="label">Loading...</span>
+      </div>
+    </div>
+    <div class="instructions">
+      <p>🖱️ Click and drag to rotate | Scroll to zoom | Hover over spikes for details</p>
+      <p>🌍 Earth texture shows geography | Spike Height = Frequency | Color = Avg Magnitude</p>
+    </div>
+    <div class="hover-tooltip" id="hoverTooltip" style="display: none;">
+      <div class="tooltip-content"></div>
+    </div>
+    <div class="earthquake-list" id="earthquakeList">
+      <div class="list-header">
+        <h2>Recent Earthquakes</h2>
+        <span class="list-count" id="listCount">0</span>
+      </div>
+      <div class="list-content" id="listContent">
+        <div class="list-loading">Loading earthquakes...</div>
+      </div>
     </div>
     <script type="module" src="/main.js"></script>
   </body>
