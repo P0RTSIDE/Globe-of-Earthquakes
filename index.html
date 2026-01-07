@@ -41,6 +41,19 @@
         <div class="list-loading">Loading earthquakes...</div>
       </div>
     </div>
+    <div class="location-modal" id="locationModal" style="display: none;">
+      <div class="modal-content">
+        <button class="modal-close" id="modalClose">&times;</button>
+        <div class="modal-title">📍 Earthquake Location</div>
+        <div class="modal-body" id="modalBody"></div>
+      </div>
+    </div>
+    <div class="data-attribution">
+      <div class="attribution-title">Data Source</div>
+      <div class="attribution-text">USGS Earthquake Hazards Program</div>
+      <div class="attribution-text">Updated: Last 30 days</div>
+      <div class="attribution-text">Magnitude: 4.5+</div>
+    </div>
     <script type="module" src="/main.js"></script>
   </body>
 </html>

@@ -112,7 +112,7 @@ const mouse = new THREE.Vector2();
 
 // Earthquake data storage
 let earthquakeData = [];
-// Track frequency and magnitude data per location: { count: number, magnitudeSum: number, lat: number, lon: number }
+// Track frequency and magnitude data per location: { count: number, magnitudeSum: number, lat: number, lon: number, places: string[] }
 let locationDataMap = new Map();
 // Store all earthquake locations for better hover detection
 let allEarthquakeLocations = [];
@@ -254,12 +254,17 @@ async function fetchEarthquakeData() {
       if (existing) {
         existing.count += 1;
         existing.magnitudeSum += quake.magnitude;
+        // Store unique place names
+        if (quake.place && !existing.places.includes(quake.place)) {
+          existing.places.push(quake.place);
+        }
       } else {
         locationDataMap.set(key, {
           count: 1,
           magnitudeSum: quake.magnitude,
           lat: roundedLat,
-          lon: roundedLon
+          lon: roundedLon,
+          places: quake.place ? [quake.place] : []
         });
       }
     });
@@ -302,12 +307,16 @@ function createSampleData() {
     if (existing) {
       existing.count += 1;
       existing.magnitudeSum += quake.magnitude;
+      if (quake.place && !existing.places.includes(quake.place)) {
+        existing.places.push(quake.place);
+      }
     } else {
       locationDataMap.set(key, {
         count: 1,
         magnitudeSum: quake.magnitude,
         lat: roundedLat,
-        lon: roundedLon
+        lon: roundedLon,
+        places: quake.place ? [quake.place] : []
       });
     }
   });
@@ -558,8 +567,136 @@ function updateTooltip(event) {
   }
 }
 
+// Location modal functionality
+const locationModal = document.getElementById('locationModal');
+const modalBody = document.getElementById('modalBody');
+const modalClose = document.getElementById('modalClose');
+
+function showLocationModal(locationData) {
+  const avgMagnitude = locationData.magnitudeSum / locationData.count;
+  const frequency = locationData.count;
+  const locationNames = locationData.places.length > 0 
+    ? locationData.places.join(', ') 
+    : `${Math.abs(locationData.lat).toFixed(2)}°${locationData.lat >= 0 ? 'N' : 'S'}, ${Math.abs(locationData.lon).toFixed(2)}°${locationData.lon >= 0 ? 'E' : 'W'}`;
+  
+  const latDir = locationData.lat >= 0 ? 'N' : 'S';
+  const lonDir = locationData.lon >= 0 ? 'E' : 'W';
+  
+  modalBody.innerHTML = `
+    <div class="modal-info-row">
+      <span class="modal-label">Location:</span>
+      <span class="modal-value">${locationNames}</span>
+    </div>
+    <div class="modal-info-row">
+      <span class="modal-label">Coordinates:</span>
+      <span class="modal-value">${Math.abs(locationData.lat).toFixed(2)}°${latDir}, ${Math.abs(locationData.lon).toFixed(2)}°${lonDir}</span>
+    </div>
+    <div class="modal-info-row">
+      <span class="modal-label">Frequency:</span>
+      <span class="modal-value">${frequency} earthquake${frequency > 1 ? 's' : ''}</span>
+    </div>
+    <div class="modal-info-row">
+      <span class="modal-label">Average Magnitude:</span>
+      <span class="modal-value">${avgMagnitude.toFixed(1)}</span>
+    </div>
+  `;
+  
+  locationModal.style.display = 'flex';
+  gsap.fromTo(locationModal, 
+    { opacity: 0, scale: 0.9 }, 
+    { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.7)" }
+  );
+}
+
+function hideLocationModal() {
+  gsap.to(locationModal, {
+    opacity: 0,
+    scale: 0.9,
+    duration: 0.2,
+    onComplete: () => {
+      locationModal.style.display = 'none';
+    }
+  });
+}
+
+// Track if user is dragging to prevent click during drag
+let isDragging = false;
+let dragStartTime = 0;
+
+canvas.addEventListener('mousedown', () => {
+  isDragging = false;
+  dragStartTime = Date.now();
+});
+
+canvas.addEventListener('mousemove', () => {
+  if (Date.now() - dragStartTime > 100) {
+    isDragging = true;
+  }
+});
+
+// Click handler for earthquake locations
+function handleEarthquakeClick(event) {
+  // Only trigger if not dragging (quick click, not drag)
+  if (isDragging) {
+    isDragging = false;
+    return;
+  }
+  
+  // Update mouse position
+  mouse.x = (event.clientX / sizes.width) * 2 - 1;
+  mouse.y = -(event.clientY / sizes.height) * 2 + 1;
+  
+  // Update raycaster
+  raycaster.setFromCamera(mouse, camera);
+  
+  // Check for intersection with the sphere
+  const intersects = raycaster.intersectObject(mesh);
+  
+  if (intersects.length > 0) {
+    const intersectPoint = intersects[0].point;
+    const radius = 3;
+    const { lat, lon } = vector3ToLatLong(intersectPoint, radius);
+    
+    // Find the closest earthquake location
+    let closestLocation = null;
+    let minDistance = Infinity;
+    const maxSearchDistance = 5.0;
+    
+    locationDataMap.forEach((data, key) => {
+      const location3D = latLongToVector3(data.lat, data.lon, radius);
+      const distance3D = intersectPoint.distanceTo(location3D);
+      const angularDistance = Math.sqrt(
+        Math.pow(data.lat - lat, 2) + Math.pow(data.lon - lon, 2)
+      );
+      const distance = Math.min(distance3D * 10, angularDistance);
+      
+      if (distance < minDistance && angularDistance < maxSearchDistance) {
+        minDistance = distance;
+        closestLocation = { key, data };
+      }
+    });
+    
+    if (closestLocation) {
+      showLocationModal(closestLocation.data);
+    }
+  }
+  
+  isDragging = false;
+}
+
 // Mouse move event for hover
 window.addEventListener('mousemove', updateTooltip);
+
+// Click event for location info
+canvas.addEventListener('click', handleEarthquakeClick);
+
+// Close modal handlers
+modalClose.addEventListener('click', hideLocationModal);
+locationModal.addEventListener('click', (e) => {
+  if (e.target === locationModal) {
+    hideLocationModal();
+  }
+});
 
 // Hide tooltip when mouse leaves canvas
 canvas.addEventListener('mouseleave', () => {
