@@ -427,7 +427,7 @@ function updateEarthquakeList() {
 
 // Update info display
 function updateInfoDisplay() {
-  const infoDiv = document.querySelector('.earthquake-info');
+  const infoDiv = document.querySelector('#infoWindow .window-body');
   if (infoDiv) {
     const totalQuakes = earthquakeData.length;
     const maxMagnitude = Math.max(...earthquakeData.map(q => q.magnitude));
@@ -720,3 +720,116 @@ tl.fromTo('.title', { opacity: 0 }, { opacity: 1 });
 
 // Load earthquake data
 fetchEarthquakeData();
+
+// Window Management System
+class WindowManager {
+  constructor() {
+    this.windows = {
+      info: {
+        element: document.getElementById('infoWindow'),
+        button: document.getElementById('toggleInfoBtn'),
+        closeBtn: document.getElementById('closeInfoBtn'),
+        defaultPosition: { top: '20%', right: '4rem' }
+      },
+      list: {
+        element: document.getElementById('listWindow'),
+        button: document.getElementById('toggleListBtn'),
+        closeBtn: document.getElementById('closeListBtn'),
+        defaultPosition: { left: '1rem', top: '50%', transform: 'translateY(-50%)' }
+      },
+      data: {
+        element: document.getElementById('dataWindow'),
+        button: document.getElementById('toggleDataBtn'),
+        closeBtn: document.getElementById('closeDataBtn'),
+        defaultPosition: { bottom: '1rem', right: '1rem' }
+      }
+    };
+    
+    this.init();
+  }
+  
+  init() {
+    // Initialize all windows as closed
+    Object.keys(this.windows).forEach(key => {
+      const window = this.windows[key];
+      window.isOpen = false;
+      
+      // Set default positions
+      this.setDefaultPosition(window);
+      
+      // Add event listeners
+      window.button.addEventListener('click', () => this.toggleWindow(key));
+      window.closeBtn.addEventListener('click', () => this.closeWindow(key));
+    });
+  }
+  
+  setDefaultPosition(window) {
+    const pos = window.defaultPosition;
+    Object.keys(pos).forEach(key => {
+      if (key === 'transform') {
+        window.element.style.transform = pos[key];
+      } else {
+        window.element.style[key] = pos[key];
+      }
+    });
+  }
+  
+  openWindow(key) {
+    const window = this.windows[key];
+    if (!window || window.isOpen) return;
+    
+    window.isOpen = true;
+    window.element.classList.add('active');
+    window.button.classList.add('active');
+    
+    // Bring to front
+    this.bringToFront(window.element);
+  }
+  
+  closeWindow(key) {
+    const window = this.windows[key];
+    if (!window || !window.isOpen) return;
+    
+    window.isOpen = false;
+    window.element.classList.remove('active');
+    window.button.classList.remove('active');
+  }
+  
+  toggleWindow(key) {
+    const window = this.windows[key];
+    if (!window) return;
+    
+    if (window.isOpen) {
+      this.closeWindow(key);
+    } else {
+      this.openWindow(key);
+    }
+  }
+  
+  bringToFront(element) {
+    // Get all draggable windows
+    const allWindows = document.querySelectorAll('.draggable-window.active');
+    let maxZ = 100;
+    
+    allWindows.forEach(win => {
+      const z = parseInt(window.getComputedStyle(win).zIndex) || 100;
+      maxZ = Math.max(maxZ, z);
+    });
+    
+    element.style.zIndex = maxZ + 1;
+  }
+}
+
+// Initialize window manager after DOM is loaded
+let windowManager;
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    windowManager = new WindowManager();
+    // Open info window by default
+    windowManager.openWindow('info');
+  });
+} else {
+  windowManager = new WindowManager();
+  // Open info window by default
+  windowManager.openWindow('info');
+}

@@ -13,16 +13,23 @@
   <body>
     <canvas class="webgl"></canvas>
     <nav>
-      <a href="/">Sphere</a>
-      <ul>
-        <li>Interactive</li>
-        <li>Real-time Data</li>
+      <a href="/">Earthquake Globe</a>
+      <ul class="nav-controls">
+        <li><button class="nav-btn" id="toggleInfoBtn" title="Toggle Information Panel">📊 Info</button></li>
+        <li><button class="nav-btn" id="toggleListBtn" title="Toggle Earthquake List">📋 List</button></li>
+        <li><button class="nav-btn" id="toggleDataBtn" title="Toggle Data Source">📡 Data</button></li>
       </ul>
     </nav>
     <h1 class="title">Earthquake Globe</h1>
-    <div class="earthquake-info">
-      <div class="info-item">
-        <span class="label">Loading...</span>
+    <div class="earthquake-info draggable-window" id="infoWindow">
+      <div class="window-header">
+        <span class="window-title">Earthquake Information</span>
+        <button class="window-close" id="closeInfoBtn">&times;</button>
+      </div>
+      <div class="window-body">
+        <div class="info-item">
+          <span class="label">Loading...</span>
+        </div>
       </div>
     </div>
     <div class="instructions">
@@ -32,13 +39,16 @@
     <div class="hover-tooltip" id="hoverTooltip" style="display: none;">
       <div class="tooltip-content"></div>
     </div>
-    <div class="earthquake-list" id="earthquakeList">
-      <div class="list-header">
-        <h2>Recent Earthquakes</h2>
+    <div class="earthquake-list draggable-window" id="listWindow">
+      <div class="window-header">
+        <span class="window-title">Recent Earthquakes</span>
         <span class="list-count" id="listCount">0</span>
+        <button class="window-close" id="closeListBtn">&times;</button>
       </div>
-      <div class="list-content" id="listContent">
-        <div class="list-loading">Loading earthquakes...</div>
+      <div class="window-body">
+        <div class="list-content" id="listContent">
+          <div class="list-loading">Loading earthquakes...</div>
+        </div>
       </div>
     </div>
     <div class="location-modal" id="locationModal" style="display: none;">
@@ -48,11 +58,19 @@
         <div class="modal-body" id="modalBody"></div>
       </div>
     </div>
-    <div class="data-attribution">
-      <div class="attribution-title">Data Source</div>
-      <div class="attribution-text">USGS Earthquake Hazards Program</div>
-      <div class="attribution-text">Updated: Last 30 days</div>
-      <div class="attribution-text">Magnitude: 4.5+</div>
+    <div class="data-attribution draggable-window" id="dataWindow">
+      <div class="window-header">
+        <span class="window-title">Data Source</span>
+        <button class="window-close" id="closeDataBtn">&times;</button>
+      </div>
+      <div class="window-body">
+        <div class="attribution-title">USGS Earthquake Hazards Program</div>
+        <div class="attribution-text">Updated: Last 30 days</div>
+        <div class="attribution-text">Magnitude: 4.5+</div>
+        <div class="attribution-link">
+          <a href="ACKNOWLEDGMENTS.md" target="_blank" class="ack-link">View Acknowledgments</a>
+        </div>
+      </div>
     </div>
     <script type="module" src="/main.js"></script>
   </body>
