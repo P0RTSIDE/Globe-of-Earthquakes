@@ -18,6 +18,7 @@
         <li><button class="nav-btn" id="toggleInfoBtn" title="Toggle Information Panel">📊 Info</button></li>
         <li><button class="nav-btn" id="toggleListBtn" title="Toggle Earthquake List">📋 List</button></li>
         <li><button class="nav-btn" id="toggleDataBtn" title="Toggle Data Source">📡 Data</button></li>
+        <li><button class="nav-btn" id="toggleInstructBtn" title="Toggle Instructions">Controls</button></li>
       </ul>
     </nav>
     <h1 class="title">Earthquake Globe</h1>
@@ -32,7 +33,8 @@
         </div>
       </div>
     </div>
-    <div class="instructions">
+    <div class="instructions" id="instructionsWindow">
+      <button class="instructions-close" id="closeInstructionsBtn">&times;</button>
       <p>🖱️ Click and drag to rotate | Scroll to zoom | Hover over spikes for details</p>
       <p>🌍 Earth texture shows geography | Spike Height = Frequency | Color = Avg Magnitude</p>
     </div>
