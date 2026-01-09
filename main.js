@@ -466,7 +466,12 @@ window.addEventListener('resize', () => {
   sizes.height = window.innerHeight;
   camera.aspect = sizes.width / sizes.height;
   camera.updateProjectionMatrix();
-  renderer.setSize(sizes.width, sizes.height)
+  renderer.setSize(sizes.width, sizes.height);
+  
+  // Recalculate instructions position on resize
+  if (windowManager) {
+    windowManager.adjustInstructionsPosition();
+  }
 });
 
 // Hover tooltip functionality
@@ -784,6 +789,9 @@ class WindowManager {
     
     // Bring to front
     this.bringToFront(window.element);
+    
+    // Adjust instructions position if list window is opened
+    this.adjustInstructionsPosition();
   }
   
   closeWindow(key) {
@@ -793,6 +801,52 @@ class WindowManager {
     window.isOpen = false;
     window.element.classList.remove('active');
     window.button.classList.remove('active');
+    
+    // Adjust instructions position if list window is closed
+    this.adjustInstructionsPosition();
+  }
+  
+  adjustInstructionsPosition() {
+    const instructions = document.querySelector('.instructions');
+    if (!instructions) return;
+    
+    const listWindow = this.windows.list.element;
+    const isListOpen = listWindow.classList.contains('active');
+    
+    if (isListOpen) {
+      // Get list window position and width
+      const listRect = listWindow.getBoundingClientRect();
+      const listRight = listRect.right;
+      const instructionsWidth = instructions.offsetWidth || 280;
+      const margin = 20; // Margin between list and instructions
+      
+      // Position instructions to the right of list window, but stay in viewport
+      const newLeft = listRight + margin;
+      const maxLeft = window.innerWidth - instructionsWidth - margin;
+      const finalLeft = Math.min(newLeft, maxLeft);
+      
+      // Position vertically to avoid overlap - place near bottom but above list window bottom
+      const listBottom = listRect.bottom;
+      const instructionsHeight = instructions.offsetHeight || 100;
+      const bottomSpace = window.innerHeight - listBottom;
+      
+      if (bottomSpace < instructionsHeight + margin) {
+        // Not enough space below list, position above list bottom
+        instructions.style.bottom = `${window.innerHeight - listBottom + margin}px`;
+        instructions.style.top = 'auto';
+      } else {
+        // Enough space, keep at bottom
+        instructions.style.bottom = '1rem';
+        instructions.style.top = 'auto';
+      }
+      
+      instructions.style.left = `${finalLeft}px`;
+    } else {
+      // Reset to default bottom-left position
+      instructions.style.bottom = '1rem';
+      instructions.style.top = 'auto';
+      instructions.style.left = '1rem';
+    }
   }
   
   toggleWindow(key) {
@@ -825,11 +879,36 @@ let windowManager;
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     windowManager = new WindowManager();
-    // Open info window by default
     windowManager.openWindow('info');
+    windowManager.adjustInstructionsPosition();
+    initInstructionsClose();
   });
 } else {
   windowManager = new WindowManager();
-  // Open info window by default
   windowManager.openWindow('info');
+  windowManager.adjustInstructionsPosition();
+  initInstructionsClose();
+}
+
+function initInstructionsClose() {
+  const instructionsWindow = document.getElementById('instructionsWindow');
+  const closeInstructionsBtn = document.getElementById('closeInstructionsBtn');
+  const toggleInstructBtn = document.getElementById('toggleInstructBtn');
+  
+  if (closeInstructionsBtn && instructionsWindow) {
+    closeInstructionsBtn.addEventListener('click', () => {
+      instructionsWindow.style.display = 'none';
+      if (toggleInstructBtn) {
+        toggleInstructBtn.classList.remove('active');
+      }
+    });
+  }
+  
+  if (toggleInstructBtn && instructionsWindow) {
+    toggleInstructBtn.addEventListener('click', () => {
+      const isHidden = instructionsWindow.style.display === 'none';
+      instructionsWindow.style.display = isHidden ? 'block' : 'none';
+      toggleInstructBtn.classList.toggle('active', !isHidden);
+    });
+  }
 }
