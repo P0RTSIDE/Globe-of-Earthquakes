@@ -882,12 +882,14 @@ if (document.readyState === 'loading') {
     windowManager.openWindow('info');
     windowManager.adjustInstructionsPosition();
     initInstructionsClose();
+    initAcknowledgmentsModal();
   });
 } else {
   windowManager = new WindowManager();
   windowManager.openWindow('info');
   windowManager.adjustInstructionsPosition();
   initInstructionsClose();
+  initAcknowledgmentsModal();
 }
 
 function initInstructionsClose() {
@@ -909,6 +911,113 @@ function initInstructionsClose() {
       const isHidden = instructionsWindow.style.display === 'none';
       instructionsWindow.style.display = isHidden ? 'block' : 'none';
       toggleInstructBtn.classList.toggle('active', !isHidden);
+    });
+  }
+}
+
+function initAcknowledgmentsModal() {
+  const ackModal = document.getElementById('acknowledgmentsModal');
+  const showAckBtn = document.getElementById('showAcknowledgmentsBtn');
+  const closeAckBtn = document.getElementById('closeAckModalBtn');
+  const ackContent = document.getElementById('acknowledgmentsContent');
+  
+  const acknowledgmentsHTML = `
+    <h1>Acknowledgments</h1>
+    <p>This project would not be possible without the following open-source libraries, data providers, and resources:</p>
+    
+    <h2>Libraries & Frameworks</h2>
+    
+    <h3>Three.js</h3>
+    <ul>
+      <li><strong>Repository</strong>: <a href="https://github.com/mrdoob/three.js" target="_blank">https://github.com/mrdoob/three.js</a></li>
+      <li><strong>License</strong>: MIT License</li>
+      <li><strong>Purpose</strong>: 3D graphics rendering and WebGL functionality</li>
+      <li><strong>Contributors</strong>: The Three.js community and contributors</li>
+    </ul>
+    
+    <h3>GSAP (GreenSock Animation Platform)</h3>
+    <ul>
+      <li><strong>Repository</strong>: <a href="https://github.com/greensock/GSAP" target="_blank">https://github.com/greensock/GSAP</a></li>
+      <li><strong>License</strong>: Standard "No Charge" License</li>
+      <li><strong>Purpose</strong>: Smooth animations and transitions</li>
+      <li><strong>Contributors</strong>: GreenSock team</li>
+    </ul>
+    
+    <h3>Vite</h3>
+    <ul>
+      <li><strong>Repository</strong>: <a href="https://github.com/vitejs/vite" target="_blank">https://github.com/vitejs/vite</a></li>
+      <li><strong>License</strong>: MIT License</li>
+      <li><strong>Purpose</strong>: Build tool and development server</li>
+      <li><strong>Contributors</strong>: Vite team and contributors</li>
+    </ul>
+    
+    <h2>Data Sources</h2>
+    
+    <h3>USGS Earthquake Hazards Program</h3>
+    <ul>
+      <li><strong>Website</strong>: <a href="https://earthquake.usgs.gov/" target="_blank">https://earthquake.usgs.gov/</a></li>
+      <li><strong>API</strong>: <a href="https://earthquake.usgs.gov/earthquakes/feed/v1.0/" target="_blank">https://earthquake.usgs.gov/earthquakes/feed/v1.0/</a></li>
+      <li><strong>Data</strong>: Public domain earthquake data</li>
+      <li><strong>Purpose</strong>: Real-time and historical earthquake data</li>
+      <li><strong>Note</strong>: Data is provided without warranty. The USGS makes no warranty, expressed or implied, regarding the accuracy of the data.</li>
+    </ul>
+    
+    <h2>Resources</h2>
+    
+    <h3>Earth Texture</h3>
+    <p>Earth texture imagery may be sourced from Three.js examples and Wikimedia Commons. Various public domain and Creative Commons licensed materials.</p>
+    
+    <h3>Fonts</h3>
+    <ul>
+      <li><strong>Roboto</strong>: Google Fonts (Apache License 2.0)</li>
+      <li><strong>Ubuntu</strong>: Google Fonts (Ubuntu Font License)</li>
+    </ul>
+    
+    <h2>Special Thanks</h2>
+    <ul>
+      <li>The Three.js community for excellent documentation and examples</li>
+      <li>USGS for providing free, accessible earthquake data</li>
+      <li>All open-source contributors who make projects like this possible</li>
+    </ul>
+    
+    <hr style="border: 1px solid rgba(255, 255, 255, 0.2); margin: 2rem 0;">
+    
+    <p><em>This project is built on the shoulders of giants. We are grateful to all the developers, researchers, and organizations who have contributed to the open-source ecosystem and made this visualization possible.</em></p>
+  `;
+  
+  if (showAckBtn && ackModal && ackContent) {
+    ackContent.innerHTML = acknowledgmentsHTML;
+    
+    showAckBtn.addEventListener('click', () => {
+      ackModal.style.display = 'flex';
+      gsap.fromTo(ackModal, 
+        { opacity: 0, scale: 0.9 }, 
+        { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.7)" }
+      );
+    });
+    
+    closeAckBtn.addEventListener('click', () => {
+      gsap.to(ackModal, {
+        opacity: 0,
+        scale: 0.9,
+        duration: 0.2,
+        onComplete: () => {
+          ackModal.style.display = 'none';
+        }
+      });
+    });
+    
+    ackModal.addEventListener('click', (e) => {
+      if (e.target === ackModal) {
+        gsap.to(ackModal, {
+          opacity: 0,
+          scale: 0.9,
+          duration: 0.2,
+          onComplete: () => {
+            ackModal.style.display = 'none';
+          }
+        });
+      }
     });
   }
 }
