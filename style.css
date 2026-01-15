@@ -222,13 +222,13 @@ nav ul{
   position: fixed;
   z-index: 1000;
   pointer-events: none;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.95);
   color: white;
   padding: 1rem;
   border-radius: 8px;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
   min-width: 200px;
   max-width: 300px;
   font-size: 0.9rem;
@@ -255,8 +255,14 @@ nav ul{
 }
 
 .tooltip-label {
-  opacity: 0.8;
+  opacity: 1;
   font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  margin-right: 0.5rem;
 }
 
 .tooltip-value {
@@ -594,16 +600,103 @@ nav ul{
 }
 
 .ack-link {
+  background: rgba(255, 215, 0, 0.2);
+  border: 1px solid rgba(255, 215, 0, 0.4);
   color: #ffd700;
   text-decoration: none;
-  font-size: 0.7rem;
-  transition: opacity 0.2s ease;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
   display: inline-block;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .ack-link:hover {
-  opacity: 0.8;
+  background: rgba(255, 215, 0, 0.3);
+  border-color: rgba(255, 215, 0, 0.6);
+  transform: translateY(-1px);
+}
+
+.acknowledgments-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(5px);
+}
+
+.acknowledgments-modal .modal-content {
+  background: rgba(0, 0, 0, 0.95);
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 700px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  position: relative;
+  backdrop-filter: blur(15px);
+}
+
+.acknowledgments-modal .modal-body {
+  color: white;
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+.acknowledgments-modal .modal-body h1,
+.acknowledgments-modal .modal-body h2,
+.acknowledgments-modal .modal-body h3 {
+  color: #ffd700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.8rem;
+}
+
+.acknowledgments-modal .modal-body h1 {
+  font-size: 1.8rem;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+  padding-bottom: 0.5rem;
+}
+
+.acknowledgments-modal .modal-body h2 {
+  font-size: 1.4rem;
+}
+
+.acknowledgments-modal .modal-body h3 {
+  font-size: 1.1rem;
+}
+
+.acknowledgments-modal .modal-body ul,
+.acknowledgments-modal .modal-body ol {
+  margin: 0.8rem 0;
+  padding-left: 2rem;
+}
+
+.acknowledgments-modal .modal-body li {
+  margin: 0.4rem 0;
+}
+
+.acknowledgments-modal .modal-body a {
+  color: #ffd700;
   text-decoration: underline;
+}
+
+.acknowledgments-modal .modal-body a:hover {
+  opacity: 0.8;
+}
+
+.acknowledgments-modal .modal-body strong {
+  color: #ffd700;
+  font-weight: 600;
 }
 
 @media (max-width: 768px) {
