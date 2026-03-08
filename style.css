@@ -489,6 +489,10 @@ nav ul{
   backdrop-filter: blur(5px);
 }
 
+.location-modal .modal-body {
+  color: #ffd700;
+}
+
 .modal-content {
   background: rgba(0, 0, 0, 0.95);
   border-radius: 12px;
@@ -549,9 +553,15 @@ nav ul{
   margin-bottom: 0;
 }
 
+/* Location modal - ensure all earthquake info text is yellow on dark background */
+.location-modal .modal-label,
+.location-modal .modal-value {
+  color: #ffd700 !important;
+}
+
 .modal-label {
   font-size: 0.9rem;
-  opacity: 0.8;
+  opacity: 1;
   font-weight: 500;
 }
 

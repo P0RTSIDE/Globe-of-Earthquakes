@@ -59,6 +59,11 @@ const material = new THREE.MeshStandardMaterial({
 const mesh = new THREE.Mesh(geometry, material);
 scene.add(mesh);
 
+// Detection zone overlays - yellow semi-transparent circles at each earthquake location
+// Added as child of mesh so they animate and transform with the globe
+const detectionZoneGroup = new THREE.Group();
+mesh.add(detectionZoneGroup);
+
 // Start loading texture
 loadEarthTexture();
 
@@ -226,6 +231,54 @@ function deformSphere() {
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   material.vertexColors = true;
   material.needsUpdate = true;
+
+  // Create visible detection zone overlays for easier hover/click
+  createDetectionZones();
+}
+
+// Create gradient overlay circles - strongest at earthquake point, fading at edges
+function createDetectionZones() {
+  const radius = 3;
+  const zoneRadius = 0.5; // 3D units - size of the clickable/hoverable area
+  const zoneOffset = 0.08; // Slightly above sphere surface to avoid z-fighting
+
+  // Radial gradient texture: strongest yellow at center, fade to transparent at edges
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  gradient.addColorStop(0, 'rgba(255, 235, 59, 0.55)');   // Strong at center (earthquake point)
+  gradient.addColorStop(0.3, 'rgba(255, 235, 59, 0.25)');
+  gradient.addColorStop(0.6, 'rgba(255, 235, 59, 0.08)');
+  gradient.addColorStop(1, 'rgba(255, 235, 59, 0)');     // Fully transparent at edge
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, size, size);
+  const gradientTexture = new THREE.CanvasTexture(canvas);
+  gradientTexture.needsUpdate = true;
+
+  const circleGeometry = new THREE.CircleGeometry(zoneRadius, 32);
+  const zoneMaterial = new THREE.MeshBasicMaterial({
+    map: gradientTexture,
+    transparent: true,
+    opacity: 1,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+
+  while (detectionZoneGroup.children.length > 0) {
+    detectionZoneGroup.remove(detectionZoneGroup.children[0]);
+  }
+  locationDataMap.forEach((data, key) => {
+    const pos = latLongToVector3(data.lat, data.lon, radius);
+    const circle = new THREE.Mesh(circleGeometry, zoneMaterial.clone());
+    circle.position.copy(pos).multiplyScalar(1 + zoneOffset / radius);
+    circle.lookAt(pos.clone().multiplyScalar(2)); // Face outward from sphere
+    circle.renderOrder = 1; // Render on top for visibility
+    circle.userData = { locationData: data, key };
+    detectionZoneGroup.add(circle);
+  });
 }
 
 // Fetch earthquake data from USGS API
@@ -484,34 +537,31 @@ function updateTooltip(event) {
   mouse.x = (event.clientX / sizes.width) * 2 - 1;
   mouse.y = -(event.clientY / sizes.height) * 2 + 1;
   
-  // Update raycaster
+  // Update raycaster - check detection zones first, then sphere
   raycaster.setFromCamera(mouse, camera);
+  const allTargets = [...detectionZoneGroup.children, mesh];
+  const intersects = raycaster.intersectObjects(allTargets);
   
-  // Check for intersection with the sphere
-  const intersects = raycaster.intersectObject(mesh);
+  let closestLocation = null;
   
-  if (intersects.length > 0) {
+  // If we hit a detection zone, use it directly (most reliable)
+  const zoneHit = intersects.find(i => i.object.userData?.locationData);
+  if (zoneHit) {
+    closestLocation = { key: zoneHit.object.userData.key, data: zoneHit.object.userData.locationData };
+  } else if (intersects.length > 0) {
+    // Fallback: sphere hit - find nearest earthquake within range
     const intersectPoint = intersects[0].point;
     const radius = 3;
     const { lat, lon } = vector3ToLatLong(intersectPoint, radius);
-    
-    // Find the closest earthquake location using better distance calculation
-    // Account for sphere curvature by using 3D distance from spike positions
-    let closestLocation = null;
     let minDistance = Infinity;
-    const maxSearchDistance = 5.0; // Increased from 2.0 degrees for better reliability
+    const maxSearchDistance = 8.0; 
     
     locationDataMap.forEach((data, key) => {
-      // Calculate 3D distance on sphere surface for more accurate matching
       const location3D = latLongToVector3(data.lat, data.lon, radius);
       const distance3D = intersectPoint.distanceTo(location3D);
-      
-      // Also check angular distance as fallback
       const angularDistance = Math.sqrt(
         Math.pow(data.lat - lat, 2) + Math.pow(data.lon - lon, 2)
       );
-      
-      // Use the smaller of the two distances, weighted towards 3D distance
       const distance = Math.min(distance3D * 10, angularDistance);
       
       if (distance < minDistance && angularDistance < maxSearchDistance) {
@@ -519,8 +569,9 @@ function updateTooltip(event) {
         closestLocation = { key, data };
       }
     });
-    
-    if (closestLocation) {
+  }
+  
+  if (closestLocation) {
       const { data } = closestLocation;
       const avgMagnitude = data.magnitudeSum / data.count;
       const frequency = data.count;
@@ -562,10 +613,6 @@ function updateTooltip(event) {
       tooltip.style.top = `${top}px`;
       tooltip.style.display = 'block';
       hoveredLocation = closestLocation;
-    } else {
-      tooltip.style.display = 'none';
-      hoveredLocation = null;
-    }
   } else {
     tooltip.style.display = 'none';
     hoveredLocation = null;
@@ -651,21 +698,21 @@ function handleEarthquakeClick(event) {
   mouse.x = (event.clientX / sizes.width) * 2 - 1;
   mouse.y = -(event.clientY / sizes.height) * 2 + 1;
   
-  // Update raycaster
+  // Update raycaster - check detection zones first, then sphere
   raycaster.setFromCamera(mouse, camera);
+  const allTargets = [...detectionZoneGroup.children, mesh];
+  const intersects = raycaster.intersectObjects(allTargets);
   
-  // Check for intersection with the sphere
-  const intersects = raycaster.intersectObject(mesh);
-  
-  if (intersects.length > 0) {
+  let closestLocation = null;
+  const zoneHit = intersects.find(i => i.object.userData?.locationData);
+  if (zoneHit) {
+    closestLocation = { data: zoneHit.object.userData.locationData };
+  } else if (intersects.length > 0) {
     const intersectPoint = intersects[0].point;
     const radius = 3;
     const { lat, lon } = vector3ToLatLong(intersectPoint, radius);
-    
-    // Find the closest earthquake location
-    let closestLocation = null;
     let minDistance = Infinity;
-    const maxSearchDistance = 5.0;
+    const maxSearchDistance = 8.0;
     
     locationDataMap.forEach((data, key) => {
       const location3D = latLongToVector3(data.lat, data.lon, radius);
@@ -680,10 +727,10 @@ function handleEarthquakeClick(event) {
         closestLocation = { key, data };
       }
     });
-    
-    if (closestLocation) {
-      showLocationModal(closestLocation.data);
-    }
+  }
+  
+  if (closestLocation) {
+    showLocationModal(closestLocation.data);
   }
   
   isDragging = false;
