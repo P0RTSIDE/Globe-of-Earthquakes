@@ -34,8 +34,7 @@ This project would not be possible without the following open-source libraries, 
 ## Resources
 
 ### Earth Texture
-- Earth texture imagery may be sourced from Three.js examples and Wikimedia Commons
-- Various public domain and Creative Commons licensed materials
+- The globe uses an equirectangular projection texture mapped onto the sphere. Primary source: Three.js examples repository (earth_atmos_2048.jpg, NASA Blue Marble imagery). Fallback: Wikimedia Commons equirectangular projection. The texture provides the base geography; earthquake data is overlaid as vertex-colored deformations.
 
 ### Fonts
 - **Roboto**: Google Fonts (Apache License 2.0)

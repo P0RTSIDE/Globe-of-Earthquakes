@@ -236,47 +236,79 @@ function deformSphere() {
   createDetectionZones();
 }
 
-// Create gradient overlay circles - strongest at earthquake point, fading at edges
-function createDetectionZones() {
-  const radius = 3;
-  const zoneRadius = 0.5; // 3D units - size of the clickable/hoverable area
-  const zoneOffset = 0.08; // Slightly above sphere surface to avoid z-fighting
+// Only trigger hover/click when cursor is within visible gradient (not transparent edges)
+// Gradient opacity: 0.55 center, 0.25 @30%, 0.08 @60%, 0 @100% — use inner 50% as active area
+const ACTIVE_GRADIENT_FRACTION = 0.5;
+const _circleWorldPos = new THREE.Vector3();
+const _toCamera = new THREE.Vector3();
+const _toPoint = new THREE.Vector3();
 
-  // Radial gradient texture: strongest yellow at center, fade to transparent at edges
+// Only detect zones/earthquakes on the camera-facing hemisphere (not the back of the globe)
+function isOnVisibleHemisphere(worldPosition) {
+  _toCamera.copy(camera.position).normalize();
+  _toPoint.copy(worldPosition).normalize();
+  return _toCamera.dot(_toPoint) > 0;
+}
+
+function isWithinVisibleGradient(intersect) {
+  const circle = intersect.object;
+  const zoneRadius = circle.userData?.zoneRadius;
+  if (zoneRadius == null) return false;
+  circle.getWorldPosition(_circleWorldPos);
+  const distFromCenter = intersect.point.distanceTo(_circleWorldPos);
+  return distFromCenter <= zoneRadius * ACTIVE_GRADIENT_FRACTION;
+}
+
+// Create gradient overlay circles - magnitude color strongest at center, fade to transparent at edges
+function createMagnitudeGradientTexture(threeColor) {
   const size = 128;
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext('2d');
+  const r = Math.round(threeColor.r * 255);
+  const g = Math.round(threeColor.g * 255);
+  const b = Math.round(threeColor.b * 255);
   const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  gradient.addColorStop(0, 'rgba(255, 235, 59, 0.55)');   // Strong at center (earthquake point)
-  gradient.addColorStop(0.3, 'rgba(255, 235, 59, 0.25)');
-  gradient.addColorStop(0.6, 'rgba(255, 235, 59, 0.08)');
-  gradient.addColorStop(1, 'rgba(255, 235, 59, 0)');     // Fully transparent at edge
+  gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.55)`);   // Strong at center (earthquake point)
+  gradient.addColorStop(0.3, `rgba(${r}, ${g}, ${b}, 0.25)`);
+  gradient.addColorStop(0.6, `rgba(${r}, ${g}, ${b}, 0.08)`);
+  gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);     // Fully transparent at edge (stays within hitbox)
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
-  const gradientTexture = new THREE.CanvasTexture(canvas);
-  gradientTexture.needsUpdate = true;
+  return new THREE.CanvasTexture(canvas);
+}
+
+function createDetectionZones() {
+  const radius = 3;
+  const zoneRadius = 0.5; // 3D units - size of the clickable/hoverable area
+  const zoneOffset = 0.08; // Slightly above sphere surface to avoid z-fighting
 
   const circleGeometry = new THREE.CircleGeometry(zoneRadius, 32);
-  const zoneMaterial = new THREE.MeshBasicMaterial({
-    map: gradientTexture,
-    transparent: true,
-    opacity: 1,
-    side: THREE.DoubleSide,
-    depthWrite: false,
-  });
 
   while (detectionZoneGroup.children.length > 0) {
     detectionZoneGroup.remove(detectionZoneGroup.children[0]);
   }
   locationDataMap.forEach((data, key) => {
+    const avgMagnitude = data.magnitudeSum / data.count;
+    const magnitudeColor = getMagnitudeColor(avgMagnitude);
+    const gradientTexture = createMagnitudeGradientTexture(magnitudeColor);
+    gradientTexture.needsUpdate = true;
+
+    const zoneMaterial = new THREE.MeshBasicMaterial({
+      map: gradientTexture,
+      transparent: true,
+      opacity: 1,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+
     const pos = latLongToVector3(data.lat, data.lon, radius);
-    const circle = new THREE.Mesh(circleGeometry, zoneMaterial.clone());
+    const circle = new THREE.Mesh(circleGeometry, zoneMaterial);
     circle.position.copy(pos).multiplyScalar(1 + zoneOffset / radius);
     circle.lookAt(pos.clone().multiplyScalar(2)); // Face outward from sphere
     circle.renderOrder = 1; // Render on top for visibility
-    circle.userData = { locationData: data, key };
+    circle.userData = { locationData: data, key, zoneRadius };
     detectionZoneGroup.add(circle);
   });
 }
@@ -544,12 +576,16 @@ function updateTooltip(event) {
   
   let closestLocation = null;
   
-  // If we hit a detection zone, use it directly (most reliable)
-  const zoneHit = intersects.find(i => i.object.userData?.locationData);
+  // If we hit a detection zone within visible gradient and on camera-facing side, use it
+  const zoneHit = intersects.find(i => {
+    if (!i.object.userData?.locationData || !isWithinVisibleGradient(i)) return false;
+    i.object.getWorldPosition(_circleWorldPos);
+    return isOnVisibleHemisphere(_circleWorldPos);
+  });
   if (zoneHit) {
     closestLocation = { key: zoneHit.object.userData.key, data: zoneHit.object.userData.locationData };
-  } else if (intersects.length > 0) {
-    // Fallback: sphere hit - find nearest earthquake within range
+  } else if (intersects.length > 0 && intersects[0].object === mesh) {
+    // Fallback: only when ray hits globe first — only consider earthquakes on visible hemisphere
     const intersectPoint = intersects[0].point;
     const radius = 3;
     const { lat, lon } = vector3ToLatLong(intersectPoint, radius);
@@ -558,6 +594,7 @@ function updateTooltip(event) {
     
     locationDataMap.forEach((data, key) => {
       const location3D = latLongToVector3(data.lat, data.lon, radius);
+      if (!isOnVisibleHemisphere(location3D)) return; // Skip earthquakes on back of globe
       const distance3D = intersectPoint.distanceTo(location3D);
       const angularDistance = Math.sqrt(
         Math.pow(data.lat - lat, 2) + Math.pow(data.lon - lon, 2)
@@ -704,10 +741,14 @@ function handleEarthquakeClick(event) {
   const intersects = raycaster.intersectObjects(allTargets);
   
   let closestLocation = null;
-  const zoneHit = intersects.find(i => i.object.userData?.locationData);
+  const zoneHit = intersects.find(i => {
+    if (!i.object.userData?.locationData || !isWithinVisibleGradient(i)) return false;
+    i.object.getWorldPosition(_circleWorldPos);
+    return isOnVisibleHemisphere(_circleWorldPos);
+  });
   if (zoneHit) {
     closestLocation = { data: zoneHit.object.userData.locationData };
-  } else if (intersects.length > 0) {
+  } else if (intersects.length > 0 && intersects[0].object === mesh) {
     const intersectPoint = intersects[0].point;
     const radius = 3;
     const { lat, lon } = vector3ToLatLong(intersectPoint, radius);
@@ -716,6 +757,7 @@ function handleEarthquakeClick(event) {
     
     locationDataMap.forEach((data, key) => {
       const location3D = latLongToVector3(data.lat, data.lon, radius);
+      if (!isOnVisibleHemisphere(location3D)) return; // Skip earthquakes on back of globe
       const distance3D = intersectPoint.distanceTo(location3D);
       const angularDistance = Math.sqrt(
         Math.pow(data.lat - lat, 2) + Math.pow(data.lon - lon, 2)
@@ -1012,7 +1054,7 @@ function initAcknowledgmentsModal() {
     <h2>Resources</h2>
     
     <h3>Earth Texture</h3>
-    <p>Earth texture imagery may be sourced from Three.js examples and Wikimedia Commons. Various public domain and Creative Commons licensed materials.</p>
+    <p>The 3D globe uses an equirectangular (latitude-longitude) projection texture mapped onto the sphere geometry. The application loads this texture with a fallback chain: the primary source is the Three.js examples repository (earth_atmos_2048.jpg, derived from NASA Blue Marble imagery); if unavailable, it falls back to a Wikimedia Commons equirectangular projection. The texture provides the base geographic appearance; earthquake data is then overlaid as vertex-colored deformations and magnitude-based coloring that blends with the underlying texture.</p>
     
     <h3>Fonts</h3>
     <ul>

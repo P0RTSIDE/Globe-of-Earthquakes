@@ -48,7 +48,5 @@ Earthquake Hazards Program:
 - API: https://earthquake.usgs.gov/earthquakes/feed/v1.0/
 - Data is in the public domain and provided without warranty
 
-Earth texture imagery may be sourced from:
-- Three.js examples (public domain/CC licensed)
-- Wikimedia Commons (various licenses)
+Earth texture: Equirectangular projection. Primary: Three.js examples (earth_atmos_2048.jpg, NASA Blue Marble). Fallback: Wikimedia Commons. Provides base geography; earthquake overlays use vertex coloring.
 
