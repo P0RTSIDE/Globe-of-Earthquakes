@@ -5,7 +5,35 @@ body, html {
   box-sizing: border-box;
   overflow-y: hidden;
   overflow-x: hidden;
-  font-family: 'Ubuntu', sans-serif;
+  font-family: 'Barlow', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.mark-sheet {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.mark {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linejoin: miter;
+  stroke-linecap: square;
+  overflow: visible;
+}
+
+.mark .mark-fill,
+.mark-sheet .mark-fill {
+  fill: currentColor;
+  stroke: none;
 }
 
 .webgl {
@@ -28,7 +56,23 @@ nav {
 nav a{
   text-decoration: none;
   color: white;
-  font-weight: bold;
+  font-weight: 600;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 1.05rem;
+}
+
+.brand .mark {
+  width: 1.35rem;
+  height: 1.35rem;
+  color: #ffd700;
 }
 
 nav ul{
@@ -47,12 +91,23 @@ nav ul{
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
+  padding: 0.45rem 0.85rem;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
   transition: all 0.2s ease;
-  font-family: 'Ubuntu', sans-serif;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.nav-btn .mark {
+  width: 0.95rem;
+  height: 0.95rem;
 }
 
 .nav-btn:hover {
@@ -70,11 +125,26 @@ nav ul{
   color: white;
   z-index: 2;
   position: absolute;
-  font-size: 2.5rem;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-size: 2.35rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   left: 50%;
-  top: 15%;
+  top: 14%;
   transform: translate(-50%, -50%);
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.title .mark {
+  width: 1.05em;
+  height: 1.05em;
+  color: #ffd700;
 }
 
 .draggable-window {
@@ -107,9 +177,20 @@ nav ul{
 
 .window-title {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: 'Barlow Semi Condensed', sans-serif;
   color: #ffd700;
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.window-title .mark {
+  width: 1rem;
+  height: 1rem;
 }
 
 .window-header .list-count {
@@ -127,18 +208,22 @@ nav ul{
   background: transparent;
   border: none;
   color: white;
-  font-size: 1.5rem;
   cursor: pointer;
   width: 28px;
   height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 2px;
   transition: all 0.2s ease;
   opacity: 0.7;
   padding: 0;
   line-height: 1;
+}
+
+.window-close .mark {
+  width: 0.85rem;
+  height: 0.85rem;
 }
 
 .window-close:hover {
@@ -214,8 +299,9 @@ nav ul{
   padding-top: 0.8rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   font-size: 0.75rem;
-  opacity: 0.7;
-  font-style: italic;
+  opacity: 0.75;
+  font-style: normal;
+  line-height: 1.4;
 }
 
 .hover-tooltip {
@@ -235,12 +321,23 @@ nav ul{
 }
 
 .tooltip-title {
-  font-weight: bold;
-  font-size: 1rem;
+  font-weight: 600;
+  font-size: 0.92rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: 'Barlow Semi Condensed', sans-serif;
   margin-bottom: 0.8rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   color: #ffd700;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.tooltip-title .mark {
+  width: 1rem;
+  height: 1rem;
 }
 
 .tooltip-row {
@@ -278,37 +375,41 @@ nav ul{
   left: 1rem;
   color: white;
   background: rgba(0, 0, 0, 0.6);
-  padding: 0.6rem 0.8rem;
-  padding-top: 2rem;
-  border-radius: 8px;
+  padding: 0.7rem 0.85rem;
+  padding-top: 1.7rem;
+  border-radius: 6px;
   backdrop-filter: blur(10px);
-  font-size: 0.75rem;
-  line-height: 1.4;
-  max-width: 280px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  max-width: 300px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .instructions-close {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
+  top: 0.45rem;
+  right: 0.45rem;
   background: transparent;
   border: none;
   color: white;
-  font-size: 1.5rem;
   cursor: pointer;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 2px;
   transition: all 0.2s ease;
   opacity: 0.7;
   padding: 0;
   line-height: 1;
   z-index: 10;
+}
+
+.instructions-close .mark {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .instructions-close:hover {
@@ -320,8 +421,18 @@ nav ul{
 /* Instructions will be adjusted via JavaScript when list window is open */
 
 .instructions p {
-  margin: 0.2rem 0;
-  opacity: 0.9;
+  margin: 0.35rem 0;
+  opacity: 0.92;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+
+.instructions p .mark {
+  width: 0.95rem;
+  height: 0.95rem;
+  margin-top: 0.12rem;
+  color: #ffd700;
 }
 
 .instructions p:first-child {
@@ -512,16 +623,20 @@ nav ul{
   background: transparent;
   border: none;
   color: white;
-  font-size: 2rem;
   cursor: pointer;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 2px;
   transition: all 0.2s ease;
   opacity: 0.7;
+}
+
+.modal-close .mark {
+  width: 1rem;
+  height: 1rem;
 }
 
 .modal-close:hover {
@@ -531,12 +646,23 @@ nav ul{
 }
 
 .modal-title {
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-family: 'Barlow Semi Condensed', sans-serif;
   color: #ffd700;
   margin-bottom: 1.5rem;
   padding-bottom: 0.8rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.modal-title .mark {
+  width: 1.15rem;
+  height: 1.15rem;
 }
 
 .modal-info-row {
@@ -711,7 +837,8 @@ nav ul{
 
 @media (max-width: 768px) {
   .title {
-    font-size: 1.8rem;
+    font-size: 1.15rem;
+    letter-spacing: 0.1em;
     top: 8%;
   }
   
