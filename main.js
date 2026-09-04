@@ -198,6 +198,13 @@ controls.enableZoom = true
 controls.minDistance = 5
 controls.maxDistance = 50
 controls.autoRotate = false;
+controls.target.set(0, 0, 0);
+
+// Let the user take over if they drag during a list-focus move
+controls.addEventListener('start', () => {
+  gsap.killTweensOf(camera.position);
+  controls.target.set(0, 0, 0);
+});
 
 // Raycaster for hover detection
 const raycaster = new THREE.Raycaster();
@@ -220,6 +227,33 @@ function latLongToVector3(lat, lon, radius) {
   const y = radius * Math.cos(phi);
   
   return new THREE.Vector3(x, y, z);
+}
+
+function focusCameraOnLatLon(lat, lon) {
+  const locationOnGlobe = latLongToVector3(lat, lon, 3);
+  const distance = Math.max(camera.position.length(), controls.minDistance);
+  const nextPosition = locationOnGlobe.clone().normalize().multiplyScalar(distance);
+
+  gsap.killTweensOf(camera.position);
+  controls.target.set(0, 0, 0);
+
+  gsap.to(camera.position, {
+    x: nextPosition.x,
+    y: nextPosition.y,
+    z: nextPosition.z,
+    duration: 1.2,
+    ease: "power2.inOut",
+    overwrite: true,
+    onUpdate: () => {
+      controls.target.set(0, 0, 0);
+      camera.lookAt(controls.target);
+    },
+    onComplete: () => {
+      controls.target.set(0, 0, 0);
+      camera.lookAt(controls.target);
+      controls.update();
+    }
+  });
 }
 
 // Convert 3D position back to lat/long
@@ -568,24 +602,7 @@ function updateEarthquakeList() {
     item.addEventListener('click', () => {
       const lat = parseFloat(item.dataset.lat);
       const lon = parseFloat(item.dataset.lon);
-      
-      // Find camera position to look at this location
-      const targetPosition = latLongToVector3(lat, lon, 3);
-      const distance = camera.position.length();
-      const lookAtPosition = targetPosition.clone().normalize().multiplyScalar(distance);
-      
-      // Animate camera to look at this location
-      gsap.to(camera.position, {
-        x: lookAtPosition.x,
-        y: lookAtPosition.y,
-        z: lookAtPosition.z,
-        duration: 1.5,
-        ease: "power2.inOut",
-        onUpdate: () => {
-          camera.lookAt(targetPosition);
-          controls.target.copy(targetPosition);
-        }
-      });
+      focusCameraOnLatLon(lat, lon);
     });
     
     item.addEventListener('mouseenter', () => {
