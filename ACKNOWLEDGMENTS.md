@@ -35,7 +35,7 @@ This project would not be possible without the following open-source libraries, 
 
 ### Earth Texture
 - Color map prefers a Blue Marble source, then the Three.js Earth atmosphere map, then a Wikimedia Commons equirectangular projection.
-- Terrain and ocean maps come from the Three.js examples set (earth_normal_2048.jpg, earth_specular_2048.jpg).
+- Terrain detail uses the Three.js earth_normal_2048 map.
 - Earthquake spikes and magnitude colors are drawn on top of that map.
 
 ### Fonts

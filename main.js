@@ -20,10 +20,6 @@ const earthNormalUrls = [
   'https://threejs.org/examples/textures/planets/earth_normal_2048.jpg',
   'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_normal_2048.jpg'
 ];
-const earthSpecularUrls = [
-  'https://threejs.org/examples/textures/planets/earth_specular_2048.jpg',
-  'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_specular_2048.jpg'
-];
 
 let earthTexture;
 let textureLoaded = false;
@@ -52,10 +48,10 @@ function loadTextureWithFallback(urls, onLoad) {
   tryUrl(0);
 }
 
-const material = new THREE.MeshPhongMaterial({
+const material = new THREE.MeshStandardMaterial({
   color: 0xffffff,
-  specular: new THREE.Color(0x335577),
-  shininess: 18,
+  roughness: 0.82,
+  metalness: 0.06,
   vertexColors: true
 });
 const mesh = new THREE.Mesh(geometry, material);
@@ -92,12 +88,6 @@ loadTextureWithFallback(earthNormalUrls, (texture) => {
   material.needsUpdate = true;
 });
 
-loadTextureWithFallback(earthSpecularUrls, (texture) => {
-  applyTextureFilters(texture, false);
-  material.specularMap = texture;
-  material.needsUpdate = true;
-});
-
 const atmosphere = new THREE.Mesh(
   new THREE.SphereGeometry(3.12, 96, 96),
   new THREE.ShaderMaterial({
@@ -111,7 +101,7 @@ const atmosphere = new THREE.Mesh(
     fragmentShader: `
       varying vec3 vNormal;
       void main() {
-        float intensity = pow(0.62 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.2);
+        float intensity = pow(0.55 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 4.4);
         gl_FragColor = vec4(0.28, 0.52, 0.95, 1.0) * intensity;
       }
     `,
@@ -164,15 +154,15 @@ const sizes = {
   height: window.innerHeight
 }
 
-const ambientLight = new THREE.AmbientLight(0xb8c4d4, 0.32);
+const ambientLight = new THREE.AmbientLight(0xc9d2de, 0.55);
 scene.add(ambientLight);
 
-const sunLight = new THREE.DirectionalLight(0xfff4e5, 1.35);
-sunLight.position.set(9, 4.5, 7);
+const sunLight = new THREE.DirectionalLight(0xfff6ea, 1.15);
+sunLight.position.set(8, 5, 9);
 scene.add(sunLight);
 
-const fillLight = new THREE.DirectionalLight(0x6f8cb8, 0.28);
-fillLight.position.set(-8, -3, -6);
+const fillLight = new THREE.DirectionalLight(0x7f93b3, 0.22);
+fillLight.position.set(-7, -2, -5);
 scene.add(fillLight);
 
 // Camera
@@ -190,7 +180,7 @@ if (THREE.sRGBEncoding !== undefined) {
 }
 if (THREE.ACESFilmicToneMapping !== undefined) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.08;
+  renderer.toneMappingExposure = 0.92;
 }
 textureAnisotropy = renderer.capabilities.getMaxAnisotropy();
 if (earthTexture) {
@@ -198,7 +188,6 @@ if (earthTexture) {
 }
 if (material.map) material.map.anisotropy = textureAnisotropy;
 if (material.normalMap) material.normalMap.anisotropy = textureAnisotropy;
-if (material.specularMap) material.specularMap.anisotropy = textureAnisotropy;
 renderer.render(scene, camera)
 
 // Controls - now with zoom enabled
@@ -1156,7 +1145,7 @@ function initAcknowledgmentsModal() {
     <h2>Resources</h2>
     
     <h3>Earth Texture</h3>
-      <p>The globe uses an equirectangular Earth map, plus terrain and ocean maps from the Three.js examples set. Color imagery prefers a Blue Marble source, then the Three.js Earth atmosphere map, then a Wikimedia Commons projection. Earthquake spikes and magnitude colors are drawn on top of that map.</p>
+      <p>The globe uses an equirectangular Earth map plus a terrain map from the Three.js examples set. Color imagery prefers a Blue Marble source, then the Three.js Earth atmosphere map, then a Wikimedia Commons projection. Earthquake spikes and magnitude colors are drawn on top of that map.</p>
     
     <h3>Fonts</h3>
     <ul>
