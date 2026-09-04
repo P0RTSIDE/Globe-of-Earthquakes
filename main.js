@@ -4,60 +4,144 @@ import gsap from 'gsap';
 
 // Scene
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
+scene.background = new THREE.Color(0x020308);
 
-// Create our sphere with higher resolution for better deformation
-const geometry = new THREE.SphereGeometry(3, 128, 128);
+// Denser sphere so coastlines and quake spikes stay crisp
+const geometry = new THREE.SphereGeometry(3, 256, 256);
 
-// Load Earth texture
 const textureLoader = new THREE.TextureLoader();
-// Using a reliable Earth texture from a CDN
-const earthTextureUrls = [
+const earthColorUrls = [
+  'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
   'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg',
   'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg',
   'https://upload.wikimedia.org/wikipedia/commons/8/83/Equirectangular_projection_SW.jpg'
 ];
+const earthNormalUrls = [
+  'https://threejs.org/examples/textures/planets/earth_normal_2048.jpg',
+  'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_normal_2048.jpg'
+];
+const earthSpecularUrls = [
+  'https://threejs.org/examples/textures/planets/earth_specular_2048.jpg',
+  'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_specular_2048.jpg'
+];
 
 let earthTexture;
 let textureLoaded = false;
+let textureAnisotropy = 8;
 
-// Try to load texture with fallback
+function applyTextureFilters(texture, isColor) {
+  texture.anisotropy = textureAnisotropy;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  if (isColor && THREE.sRGBEncoding !== undefined) {
+    texture.encoding = THREE.sRGBEncoding;
+  }
+}
+
+function loadTextureWithFallback(urls, onLoad) {
+  const tryUrl = (index) => {
+    if (index >= urls.length) return;
+    textureLoader.load(
+      urls[index],
+      (texture) => onLoad(texture),
+      undefined,
+      () => tryUrl(index + 1)
+    );
+  };
+  tryUrl(0);
+}
+
+const material = new THREE.MeshPhongMaterial({
+  color: 0xffffff,
+  specular: new THREE.Color(0x335577),
+  shininess: 18,
+  vertexColors: true
+});
+const mesh = new THREE.Mesh(geometry, material);
+scene.add(mesh);
+
 const loadEarthTexture = (urlIndex = 0) => {
-  if (urlIndex >= earthTextureUrls.length) {
+  if (urlIndex >= earthColorUrls.length) {
     console.warn('Could not load Earth texture from any source, using default color');
     material.color.set('#1a4a6a');
     return;
   }
-  
+
   earthTexture = textureLoader.load(
-    earthTextureUrls[urlIndex],
+    earthColorUrls[urlIndex],
     () => {
-      // Success
       if (earthTexture) {
-        earthTexture.colorSpace = THREE.SRGBColorSpace;
+        applyTextureFilters(earthTexture, true);
         material.map = earthTexture;
         material.needsUpdate = true;
         textureLoaded = true;
-        console.log('Earth texture loaded successfully');
       }
     },
     undefined,
     () => {
-      // Error - try next URL
-      console.warn(`Failed to load texture from ${earthTextureUrls[urlIndex]}, trying next...`);
       loadEarthTexture(urlIndex + 1);
     }
   );
 };
 
-// Create material with Earth texture
-const material = new THREE.MeshStandardMaterial({
-  roughness: 0.8,
-  metalness: 0.2,
-  vertexColors: true // We'll blend vertex colors with texture
+loadTextureWithFallback(earthNormalUrls, (texture) => {
+  applyTextureFilters(texture, false);
+  material.normalMap = texture;
+  material.normalScale = new THREE.Vector2(0.7, 0.7);
+  material.needsUpdate = true;
 });
-const mesh = new THREE.Mesh(geometry, material);
-scene.add(mesh);
+
+loadTextureWithFallback(earthSpecularUrls, (texture) => {
+  applyTextureFilters(texture, false);
+  material.specularMap = texture;
+  material.needsUpdate = true;
+});
+
+const atmosphere = new THREE.Mesh(
+  new THREE.SphereGeometry(3.12, 96, 96),
+  new THREE.ShaderMaterial({
+    vertexShader: `
+      varying vec3 vNormal;
+      void main() {
+        vNormal = normalize(normalMatrix * normal);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vNormal;
+      void main() {
+        float intensity = pow(0.62 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.2);
+        gl_FragColor = vec4(0.28, 0.52, 0.95, 1.0) * intensity;
+      }
+    `,
+    blending: THREE.AdditiveBlending,
+    side: THREE.BackSide,
+    transparent: true,
+    depthWrite: false
+  })
+);
+atmosphere.raycast = () => {};
+mesh.add(atmosphere);
+
+const starCount = 1400;
+const starPositions = new Float32Array(starCount * 3);
+for (let i = 0; i < starCount; i++) {
+  const radius = 48 + Math.random() * 36;
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(2 * Math.random() - 1);
+  starPositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+  starPositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+  starPositions[i * 3 + 2] = radius * Math.cos(phi);
+}
+const starGeometry = new THREE.BufferGeometry();
+starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+scene.add(new THREE.Points(starGeometry, new THREE.PointsMaterial({
+  color: 0xdde6ff,
+  size: 0.045,
+  sizeAttenuation: true,
+  depthWrite: false
+})));
 
 // Detection zone overlays - yellow semi-transparent circles at each earthquake location
 // Added as child of mesh so they animate and transform with the globe
@@ -71,6 +155,8 @@ loadEarthTexture();
 const originalPositions = geometry.attributes.position.array.slice();
 const positions = geometry.attributes.position;
 const colors = new Float32Array(positions.count * 3);
+colors.fill(1);
+geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
 // Sizes
 const sizes = {
@@ -78,17 +164,16 @@ const sizes = {
   height: window.innerHeight
 }
 
-// Enhanced lighting
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+const ambientLight = new THREE.AmbientLight(0xb8c4d4, 0.32);
 scene.add(ambientLight);
 
-const pointLight = new THREE.PointLight(0xffffff, 1.5, 100);
-pointLight.position.set(10, 10, 10);
-scene.add(pointLight);
+const sunLight = new THREE.DirectionalLight(0xfff4e5, 1.35);
+sunLight.position.set(9, 4.5, 7);
+scene.add(sunLight);
 
-const pointLight2 = new THREE.PointLight(0xff6b6b, 0.8, 100);
-pointLight2.position.set(-10, -10, -10);
-scene.add(pointLight2);
+const fillLight = new THREE.DirectionalLight(0x6f8cb8, 0.28);
+fillLight.position.set(-8, -3, -6);
+scene.add(fillLight);
 
 // Camera
 const camera = new THREE.PerspectiveCamera(45, sizes.width/sizes.height, 0.1, 100)
@@ -97,9 +182,23 @@ scene.add(camera);
 
 // Renderer
 const canvas = document.querySelector('.webgl');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(sizes.width, sizes.height)
-renderer.setPixelRatio(2);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+if (THREE.sRGBEncoding !== undefined) {
+  renderer.outputEncoding = THREE.sRGBEncoding;
+}
+if (THREE.ACESFilmicToneMapping !== undefined) {
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.08;
+}
+textureAnisotropy = renderer.capabilities.getMaxAnisotropy();
+if (earthTexture) {
+  earthTexture.anisotropy = textureAnisotropy;
+}
+if (material.map) material.map.anisotropy = textureAnisotropy;
+if (material.normalMap) material.normalMap.anisotropy = textureAnisotropy;
+if (material.specularMap) material.specularMap.anisotropy = textureAnisotropy;
 renderer.render(scene, camera)
 
 // Controls - now with zoom enabled
@@ -261,7 +360,7 @@ function isWithinVisibleGradient(intersect) {
 
 // Create gradient overlay circles - magnitude color strongest at center, fade to transparent at edges
 function createMagnitudeGradientTexture(threeColor) {
-  const size = 128;
+  const size = 256;
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
@@ -452,7 +551,7 @@ function updateEarthquakeList() {
   listCount.textContent = sortedQuakes.length;
   
   if (sortedQuakes.length === 0) {
-    listContent.innerHTML = '<div class="list-empty">No earthquake data available</div>';
+    listContent.innerHTML = '<div class="list-empty">No recent events to show</div>';
     return;
   }
   
@@ -520,23 +619,23 @@ function updateInfoDisplay() {
     
     infoDiv.innerHTML = `
       <div class="info-item">
-        <span class="label">Total Earthquakes:</span>
+        <span class="label">Earthquakes</span>
         <span class="value">${totalQuakes}</span>
       </div>
       <div class="info-item">
-        <span class="label">Max Magnitude:</span>
+        <span class="label">Strongest</span>
         <span class="value">${maxMagnitude.toFixed(1)}</span>
       </div>
       <div class="info-item">
-        <span class="label">Avg Magnitude:</span>
+        <span class="label">Average</span>
         <span class="value">${avgMagnitude}</span>
       </div>
       <div class="legend">
-        <div class="legend-item"><span class="legend-color" style="background: #4a90e2;"></span> Avg < 3.0</div>
-        <div class="legend-item"><span class="legend-color" style="background: #ffd700;"></span> Avg 3.0-5.0</div>
-        <div class="legend-item"><span class="legend-color" style="background: #ff8c00;"></span> Avg 5.0-7.0</div>
-        <div class="legend-item"><span class="legend-color" style="background: #ff0000;"></span> Avg 7.0+</div>
-      <div class="legend-note">Height = Frequency | Color = Avg Magnitude</div>
+        <div class="legend-item"><span class="legend-color" style="background: #4a90e2;"></span> Below 3.0</div>
+        <div class="legend-item"><span class="legend-color" style="background: #ffd700;"></span> 3.0 to 5.0</div>
+        <div class="legend-item"><span class="legend-color" style="background: #ff8c00;"></span> 5.0 to 7.0</div>
+        <div class="legend-item"><span class="legend-color" style="background: #ff0000;"></span> 7.0 and above</div>
+      <div class="legend-note">Taller spikes mean more quakes at that spot. Color is average strength.</div>
       </div>
     `;
   }
@@ -615,21 +714,24 @@ function updateTooltip(event) {
       
       // Update tooltip content
       tooltipContent.innerHTML = `
-        <div class="tooltip-title">📍 Earthquake Location</div>
+        <div class="tooltip-title">
+          <svg class="mark" aria-hidden="true"><use href="#mark-spike"></use></svg>
+          <span>Location</span>
+        </div>
         <div class="tooltip-row">
-          <span class="tooltip-label">Latitude:</span>
+          <span class="tooltip-label">Latitude</span>
           <span class="tooltip-value">${data.lat.toFixed(2)}°</span>
         </div>
         <div class="tooltip-row">
-          <span class="tooltip-label">Longitude:</span>
+          <span class="tooltip-label">Longitude</span>
           <span class="tooltip-value">${data.lon.toFixed(2)}°</span>
         </div>
         <div class="tooltip-row">
-          <span class="tooltip-label">Frequency:</span>
-          <span class="tooltip-value">${frequency} earthquake${frequency > 1 ? 's' : ''}</span>
+          <span class="tooltip-label">Quakes here</span>
+          <span class="tooltip-value">${frequency}</span>
         </div>
         <div class="tooltip-row">
-          <span class="tooltip-label">Avg Magnitude:</span>
+          <span class="tooltip-label">Average strength</span>
           <span class="tooltip-value">${avgMagnitude.toFixed(1)}</span>
         </div>
       `;
@@ -673,19 +775,19 @@ function showLocationModal(locationData) {
   
   modalBody.innerHTML = `
     <div class="modal-info-row">
-      <span class="modal-label">Location:</span>
+      <span class="modal-label">Place</span>
       <span class="modal-value">${locationNames}</span>
     </div>
     <div class="modal-info-row">
-      <span class="modal-label">Coordinates:</span>
+      <span class="modal-label">Coordinates</span>
       <span class="modal-value">${Math.abs(locationData.lat).toFixed(2)}°${latDir}, ${Math.abs(locationData.lon).toFixed(2)}°${lonDir}</span>
     </div>
     <div class="modal-info-row">
-      <span class="modal-label">Frequency:</span>
-      <span class="modal-value">${frequency} earthquake${frequency > 1 ? 's' : ''}</span>
+      <span class="modal-label">Quakes here</span>
+      <span class="modal-value">${frequency}</span>
     </div>
     <div class="modal-info-row">
-      <span class="modal-label">Average Magnitude:</span>
+      <span class="modal-label">Average strength</span>
       <span class="modal-value">${avgMagnitude.toFixed(1)}</span>
     </div>
   `;
@@ -1054,12 +1156,11 @@ function initAcknowledgmentsModal() {
     <h2>Resources</h2>
     
     <h3>Earth Texture</h3>
-    <p>The 3D globe uses an equirectangular (latitude-longitude) projection texture mapped onto the sphere geometry. The application loads this texture with a fallback chain: the primary source is the Three.js examples repository (earth_atmos_2048.jpg, derived from NASA Blue Marble imagery); if unavailable, it falls back to a Wikimedia Commons equirectangular projection. The texture provides the base geographic appearance; earthquake data is then overlaid as vertex-colored deformations and magnitude-based coloring that blends with the underlying texture.</p>
+      <p>The globe uses an equirectangular Earth map, plus terrain and ocean maps from the Three.js examples set. Color imagery prefers a Blue Marble source, then the Three.js Earth atmosphere map, then a Wikimedia Commons projection. Earthquake spikes and magnitude colors are drawn on top of that map.</p>
     
     <h3>Fonts</h3>
     <ul>
-      <li><strong>Roboto</strong>: Google Fonts (Apache License 2.0)</li>
-      <li><strong>Ubuntu</strong>: Google Fonts (Ubuntu Font License)</li>
+      <li><strong>Barlow</strong> and <strong>Barlow Semi Condensed</strong>: Google Fonts (OFL)</li>
     </ul>
     
     <h2>Special Thanks</h2>

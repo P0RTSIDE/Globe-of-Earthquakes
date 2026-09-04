@@ -3,80 +3,176 @@
   <head>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Ubuntu:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
+    <title>Globe of Earthquakes</title>
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
+    <svg xmlns="http://www.w3.org/2000/svg" class="mark-sheet" aria-hidden="true" focusable="false">
+      <symbol id="mark-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="miter" stroke-linecap="square">
+        <circle cx="12" cy="13.2" r="7.6"/>
+        <ellipse cx="12" cy="13.2" rx="3.2" ry="7.6"/>
+        <path d="M4.4 13.2h15.2"/>
+        <path d="M12 2.1l1.85 4.7h-3.7L12 2.1z" fill="currentColor" stroke="none"/>
+      </symbol>
+      <symbol id="mark-seismo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="miter" stroke-linecap="square">
+        <rect x="3.2" y="4.2" width="17.6" height="15.6"/>
+        <path d="M4.6 13.2h2.1l1.15-4.4 1.55 8.1 1.7-6.2 1.25 3.4H19.4"/>
+      </symbol>
+      <symbol id="mark-events" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="miter" stroke-linecap="square">
+        <path d="M8.2 7.2H20.2M8.2 12H20.2M8.2 16.8H16.6"/>
+        <path d="M4 5.6l1.55 2.7L2.45 8.3 4 5.6z" fill="currentColor" stroke="none"/>
+        <path d="M4 10.4l1.55 2.7L2.45 13.1 4 10.4z" fill="currentColor" stroke="none"/>
+        <path d="M4 15.2l1.55 2.7L2.45 17.9 4 15.2z" fill="currentColor" stroke="none"/>
+      </symbol>
+      <symbol id="mark-waves" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="miter" stroke-linecap="square">
+        <circle cx="12" cy="12" r="1.35" fill="currentColor" stroke="none"/>
+        <path d="M8.35 8.35a5.15 5.15 0 000 7.3M15.65 8.35a5.15 5.15 0 010 7.3"/>
+        <path d="M5.7 5.7a8.9 8.9 0 000 12.6M18.3 5.7a8.9 8.9 0 010 12.6"/>
+      </symbol>
+      <symbol id="mark-orbit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="miter" stroke-linecap="square">
+        <circle cx="12" cy="12" r="3.4"/>
+        <path d="M4.6 9.4a8.4 8.4 0 0114.5 1.1"/>
+        <path d="M19.4 14.6a8.4 8.4 0 01-14.5-1.1"/>
+        <path d="M17.2 6.6l2.3 3.1-3.4.15"/>
+        <path d="M6.8 17.4l-2.3-3.1 3.4-.15"/>
+      </symbol>
+      <symbol id="mark-spike" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="miter" stroke-linecap="square">
+        <path d="M12 3.2l1.9 5.1H10.1L12 3.2z" fill="currentColor" stroke="none"/>
+        <path d="M12 8.2v7.1"/>
+        <circle cx="12" cy="17.6" r="2.5"/>
+        <circle cx="12" cy="17.6" r="0.75" fill="currentColor" stroke="none"/>
+      </symbol>
+      <symbol id="mark-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="miter" stroke-linecap="square">
+        <path d="M6.2 6.2l11.6 11.6M17.8 6.2L6.2 17.8"/>
+      </symbol>
+    </svg>
+
     <canvas class="webgl"></canvas>
     <nav>
-      <a href="/">Home</a>
+      <a href="/" class="brand">
+        <svg class="mark" aria-hidden="true"><use href="#mark-globe"></use></svg>
+        <span>Globe</span>
+      </a>
       <ul class="nav-controls">
-        <li><button class="nav-btn" id="toggleInfoBtn" title="Toggle Information Panel">📊 Info</button></li>
-        <li><button class="nav-btn" id="toggleListBtn" title="Toggle Earthquake List">📋 List</button></li>
-        <li><button class="nav-btn" id="toggleDataBtn" title="Toggle Data Source">📡 Data</button></li>
-        <li><button class="nav-btn" id="toggleInstructBtn" title="Toggle Instructions">Controls</button></li>
+        <li>
+          <button class="nav-btn" id="toggleInfoBtn" title="Open summary">
+            <svg class="mark" aria-hidden="true"><use href="#mark-seismo"></use></svg>
+            <span>Summary</span>
+          </button>
+        </li>
+        <li>
+          <button class="nav-btn" id="toggleListBtn" title="Open recent events">
+            <svg class="mark" aria-hidden="true"><use href="#mark-events"></use></svg>
+            <span>Events</span>
+          </button>
+        </li>
+        <li>
+          <button class="nav-btn" id="toggleDataBtn" title="Open data source">
+            <svg class="mark" aria-hidden="true"><use href="#mark-waves"></use></svg>
+            <span>Source</span>
+          </button>
+        </li>
+        <li>
+          <button class="nav-btn" id="toggleInstructBtn" title="Open controls">
+            <svg class="mark" aria-hidden="true"><use href="#mark-orbit"></use></svg>
+            <span>Controls</span>
+          </button>
+        </li>
       </ul>
     </nav>
-    <h1 class="title">Globe of Earthquakes</h1>
+    <h1 class="title">
+      <svg class="mark" aria-hidden="true"><use href="#mark-globe"></use></svg>
+      <span>Globe of Earthquakes</span>
+    </h1>
     <div class="earthquake-info draggable-window" id="infoWindow">
       <div class="window-header">
-        <span class="window-title">Earthquake Information</span>
-        <button class="window-close" id="closeInfoBtn">&times;</button>
+        <span class="window-title">
+          <svg class="mark" aria-hidden="true"><use href="#mark-seismo"></use></svg>
+          Summary
+        </span>
+        <button class="window-close" id="closeInfoBtn" aria-label="Close summary">
+          <svg class="mark" aria-hidden="true"><use href="#mark-close"></use></svg>
+        </button>
       </div>
       <div class="window-body">
         <div class="info-item">
-          <span class="label">Loading...</span>
+          <span class="label">Loading recent quakes...</span>
         </div>
       </div>
     </div>
     <div class="instructions" id="instructionsWindow">
-      <button class="instructions-close" id="closeInstructionsBtn">&times;</button>
-      <p>🖱️ Click and drag to rotate | Scroll to zoom | Hover over spikes for details</p>
-      <p>🌍 Earth texture shows geography | Spike Height = Frequency | Color = Avg Magnitude</p>
+      <button class="instructions-close" id="closeInstructionsBtn" aria-label="Close controls">
+        <svg class="mark" aria-hidden="true"><use href="#mark-close"></use></svg>
+      </button>
+      <p>
+        <svg class="mark" aria-hidden="true"><use href="#mark-orbit"></use></svg>
+        Drag to turn the globe. Scroll to zoom. Hover a spike for details.
+      </p>
+      <p>
+        <svg class="mark" aria-hidden="true"><use href="#mark-globe"></use></svg>
+        Land shows the map. Taller spikes mean more quakes. Color shows average strength.
+      </p>
     </div>
     <div class="hover-tooltip" id="hoverTooltip" style="display: none;">
       <div class="tooltip-content"></div>
     </div>
     <div class="earthquake-list draggable-window" id="listWindow">
       <div class="window-header">
-        <span class="window-title">Recent Earthquakes</span>
+        <span class="window-title">
+          <svg class="mark" aria-hidden="true"><use href="#mark-events"></use></svg>
+          Recent Events
+        </span>
         <span class="list-count" id="listCount">0</span>
-        <button class="window-close" id="closeListBtn">&times;</button>
+        <button class="window-close" id="closeListBtn" aria-label="Close events">
+          <svg class="mark" aria-hidden="true"><use href="#mark-close"></use></svg>
+        </button>
       </div>
       <div class="window-body">
         <div class="list-content" id="listContent">
-          <div class="list-loading">Loading earthquakes...</div>
+          <div class="list-loading">Loading recent events...</div>
         </div>
       </div>
     </div>
     <div class="location-modal" id="locationModal" style="display: none;">
       <div class="modal-content">
-        <button class="modal-close" id="modalClose">&times;</button>
-        <div class="modal-title">📍 Earthquake Location</div>
+        <button class="modal-close" id="modalClose" aria-label="Close location">
+          <svg class="mark" aria-hidden="true"><use href="#mark-close"></use></svg>
+        </button>
+        <div class="modal-title">
+          <svg class="mark" aria-hidden="true"><use href="#mark-spike"></use></svg>
+          Location
+        </div>
         <div class="modal-body" id="modalBody"></div>
       </div>
     </div>
     <div class="data-attribution draggable-window" id="dataWindow">
       <div class="window-header">
-        <span class="window-title">Data Source</span>
-        <button class="window-close" id="closeDataBtn">&times;</button>
+        <span class="window-title">
+          <svg class="mark" aria-hidden="true"><use href="#mark-waves"></use></svg>
+          Source
+        </span>
+        <button class="window-close" id="closeDataBtn" aria-label="Close source">
+          <svg class="mark" aria-hidden="true"><use href="#mark-close"></use></svg>
+        </button>
       </div>
       <div class="window-body">
         <div class="attribution-title">USGS Earthquake Hazards Program</div>
-        <div class="attribution-text">Updated: Last 30 days</div>
-        <div class="attribution-text">Magnitude: 4.5+</div>
+        <div class="attribution-text">Last 30 days</div>
+        <div class="attribution-text">Magnitude 4.5 and above</div>
         <div class="attribution-link">
-          <button class="ack-link" id="showAcknowledgmentsBtn">View Acknowledgments</button>
+          <button class="ack-link" id="showAcknowledgmentsBtn">View acknowledgments</button>
         </div>
       </div>
     </div>
     <div class="acknowledgments-modal" id="acknowledgmentsModal" style="display: none;">
       <div class="modal-content">
-        <button class="modal-close" id="closeAckModalBtn">&times;</button>
+        <button class="modal-close" id="closeAckModalBtn" aria-label="Close acknowledgments">
+          <svg class="mark" aria-hidden="true"><use href="#mark-close"></use></svg>
+        </button>
         <div class="modal-title">Acknowledgments</div>
         <div class="modal-body" id="acknowledgmentsContent"></div>
       </div>

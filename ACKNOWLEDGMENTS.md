@@ -34,11 +34,12 @@ This project would not be possible without the following open-source libraries, 
 ## Resources
 
 ### Earth Texture
-- The globe uses an equirectangular projection texture mapped onto the sphere. Primary source: Three.js examples repository (earth_atmos_2048.jpg, NASA Blue Marble imagery). Fallback: Wikimedia Commons equirectangular projection. The texture provides the base geography; earthquake data is overlaid as vertex-colored deformations.
+- Color map prefers a Blue Marble source, then the Three.js Earth atmosphere map, then a Wikimedia Commons equirectangular projection.
+- Terrain and ocean maps come from the Three.js examples set (earth_normal_2048.jpg, earth_specular_2048.jpg).
+- Earthquake spikes and magnitude colors are drawn on top of that map.
 
 ### Fonts
-- **Roboto**: Google Fonts (Apache License 2.0)
-- **Ubuntu**: Google Fonts (Ubuntu Font License)
+- **Barlow** and **Barlow Semi Condensed**: Google Fonts (OFL)
 
 ## Special Thanks
 
