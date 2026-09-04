@@ -106,8 +106,8 @@ nav ul{
 }
 
 .nav-btn .mark {
-  width: 0.95rem;
-  height: 0.95rem;
+  width: 1.05rem;
+  height: 1.05rem;
 }
 
 .nav-btn:hover {
@@ -837,9 +837,15 @@ nav ul{
 
 @media (max-width: 768px) {
   .title {
-    font-size: 1.15rem;
-    letter-spacing: 0.1em;
-    top: 8%;
+    font-size: 1.05rem;
+    letter-spacing: 0.08em;
+    top: 11%;
+  }
+
+  .nav-controls {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.35rem;
   }
   
   .instructions {
