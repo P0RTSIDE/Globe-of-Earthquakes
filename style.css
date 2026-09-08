@@ -802,6 +802,10 @@ nav ul{
   font-size: 0.9rem;
 }
 
+.acknowledgments-modal .modal-body > p:first-child {
+  margin-top: 0;
+}
+
 .acknowledgments-modal .modal-body h1,
 .acknowledgments-modal .modal-body h2,
 .acknowledgments-modal .modal-body h3 {
