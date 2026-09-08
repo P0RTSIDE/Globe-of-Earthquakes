@@ -769,46 +769,82 @@ const locationModal = document.getElementById('locationModal');
 const modalBody = document.getElementById('modalBody');
 const modalClose = document.getElementById('modalClose');
 
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function formatPlaceName(places, lat, lon) {
+  const fallback = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(2)}°${lon >= 0 ? 'E' : 'W'}`;
+  if (!places || places.length === 0) {
+    return { title: fallback, extras: [] };
+  }
+
+  const regions = [];
+  const seen = new Set();
+  places.forEach((place) => {
+    const regionMatch = String(place).match(/\bof\s+(.+)$/i);
+    const region = (regionMatch ? regionMatch[1] : place).trim();
+    const key = region.toLowerCase();
+    if (region && !seen.has(key)) {
+      seen.add(key);
+      regions.push({
+        name: region,
+        near: Boolean(regionMatch)
+      });
+    }
+  });
+
+  if (regions.length === 0) {
+    return { title: fallback, extras: [] };
+  }
+
+  const title = regions[0].near ? `Near ${regions[0].name}` : regions[0].name;
+  const extras = regions.slice(1).map((region) => (
+    region.near ? `Also near ${region.name}` : region.name
+  ));
+  return { title, extras };
+}
+
 function showLocationModal(locationData) {
   const avgMagnitude = locationData.magnitudeSum / locationData.count;
   const frequency = locationData.count;
-  const locationNames = locationData.places.length > 0 
-    ? locationData.places.join(', ') 
-    : `${Math.abs(locationData.lat).toFixed(2)}°${locationData.lat >= 0 ? 'N' : 'S'}, ${Math.abs(locationData.lon).toFixed(2)}°${locationData.lon >= 0 ? 'E' : 'W'}`;
-  
   const latDir = locationData.lat >= 0 ? 'N' : 'S';
   const lonDir = locationData.lon >= 0 ? 'E' : 'W';
+  const coords = `${Math.abs(locationData.lat).toFixed(2)}°${latDir}, ${Math.abs(locationData.lon).toFixed(2)}°${lonDir}`;
+  const { title, extras } = formatPlaceName(locationData.places, locationData.lat, locationData.lon);
+  const extrasHtml = extras.length
+    ? `<p class="location-extras">${extras.map((item) => escapeHtml(item)).join('<br>')}</p>`
+    : '';
   
   modalBody.innerHTML = `
-    <div class="modal-info-row">
-      <span class="modal-label">Place</span>
-      <span class="modal-value">${locationNames}</span>
-    </div>
-    <div class="modal-info-row">
-      <span class="modal-label">Coordinates</span>
-      <span class="modal-value">${Math.abs(locationData.lat).toFixed(2)}°${latDir}, ${Math.abs(locationData.lon).toFixed(2)}°${lonDir}</span>
-    </div>
-    <div class="modal-info-row">
-      <span class="modal-label">Quakes here</span>
-      <span class="modal-value">${frequency}</span>
-    </div>
-    <div class="modal-info-row">
-      <span class="modal-label">Average strength</span>
-      <span class="modal-value">${avgMagnitude.toFixed(1)}</span>
+    <h2 class="location-place">${escapeHtml(title)}</h2>
+    <p class="location-coords">${escapeHtml(coords)}</p>
+    ${extrasHtml}
+    <div class="location-stats">
+      <div class="location-stat">
+        <span class="location-stat-label">Quakes here</span>
+        <span class="location-stat-value">${frequency}</span>
+      </div>
+      <div class="location-stat">
+        <span class="location-stat-label">Average strength</span>
+        <span class="location-stat-value">${avgMagnitude.toFixed(1)}</span>
+      </div>
     </div>
   `;
   
+  const card = locationModal.querySelector('.modal-content');
   locationModal.style.display = 'flex';
-  gsap.fromTo(locationModal, 
-    { opacity: 0, scale: 0.9 }, 
-    { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.7)" }
-  );
+  gsap.fromTo(locationModal, { opacity: 0 }, { opacity: 1, duration: 0.18 });
+  gsap.fromTo(card, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.28, ease: "power2.out" });
 }
 
 function hideLocationModal() {
   gsap.to(locationModal, {
     opacity: 0,
-    scale: 0.9,
     duration: 0.2,
     onComplete: () => {
       locationModal.style.display = 'none';
@@ -1185,17 +1221,15 @@ function initAcknowledgmentsModal() {
     ackContent.innerHTML = acknowledgmentsHTML;
     
     showAckBtn.addEventListener('click', () => {
+      const card = ackModal.querySelector('.modal-content');
       ackModal.style.display = 'flex';
-      gsap.fromTo(ackModal, 
-        { opacity: 0, scale: 0.9 }, 
-        { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.7)" }
-      );
+      gsap.fromTo(ackModal, { opacity: 0 }, { opacity: 1, duration: 0.18 });
+      gsap.fromTo(card, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.28, ease: "power2.out" });
     });
     
     closeAckBtn.addEventListener('click', () => {
       gsap.to(ackModal, {
         opacity: 0,
-        scale: 0.9,
         duration: 0.2,
         onComplete: () => {
           ackModal.style.display = 'none';
@@ -1207,7 +1241,6 @@ function initAcknowledgmentsModal() {
       if (e.target === ackModal) {
         gsap.to(ackModal, {
           opacity: 0,
-          scale: 0.9,
           duration: 0.2,
           onComplete: () => {
             ackModal.style.display = 'none';
