@@ -1155,7 +1155,6 @@ function initAcknowledgmentsModal() {
   const ackContent = document.getElementById('acknowledgmentsContent');
   
   const acknowledgmentsHTML = `
-    <h1>Acknowledgments</h1>
     <p>This project would not be possible without the following open-source libraries, data providers, and resources:</p>
     
     <h2>Libraries & Frameworks</h2>
