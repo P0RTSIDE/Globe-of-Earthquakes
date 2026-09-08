@@ -229,6 +229,12 @@ function latLongToVector3(lat, lon, radius) {
   return new THREE.Vector3(x, y, z);
 }
 
+function getLocationDataForCoords(lat, lon) {
+  const roundedLat = Math.round(lat * 2) / 2;
+  const roundedLon = Math.round(lon * 2) / 2;
+  return locationDataMap.get(`${roundedLat},${roundedLon}`) || null;
+}
+
 function focusCameraOnLatLon(lat, lon) {
   const locationOnGlobe = latLongToVector3(lat, lon, 3);
   const distance = Math.max(camera.position.length(), controls.minDistance);
@@ -602,7 +608,16 @@ function updateEarthquakeList() {
     item.addEventListener('click', () => {
       const lat = parseFloat(item.dataset.lat);
       const lon = parseFloat(item.dataset.lon);
-      focusCameraOnLatLon(lat, lon);
+      const locationData = getLocationDataForCoords(lat, lon);
+      if (locationData) {
+        focusCameraOnLatLon(locationData.lat, locationData.lon);
+        showLocationModal(locationData);
+      } else {
+        focusCameraOnLatLon(lat, lon);
+      }
+      if (tooltip) {
+        tooltip.style.display = 'none';
+      }
     });
     
     item.addEventListener('mouseenter', () => {
