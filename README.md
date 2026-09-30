@@ -1,73 +1,48 @@
-# Earthquake Globe Visualization
+# Earthquake Globe
 
-An interactive 3D globe visualization of earthquake data, showing frequency and magnitude through visual deformations on an Earth sphere.
+An interactive 3D globe of recent earthquakes. Spike height shows how many events share a location. Color shows average magnitude.
 
-## Features
+Live site: [globe-of-earthquakes.vercel.app](https://globe-of-earthquakes.vercel.app/).
 
-- 🌍 **Interactive 3D Globe**: Rotate, zoom, and explore earthquake data on a textured Earth sphere
-- 📊 **Visual Data Representation**: 
-  - Spike height represents earthquake frequency
-  - Color coding shows average magnitude
-- 📍 **Location Information**: Click on earthquake spikes to see location names and details
-- 📋 **Earthquake List**: Browse all earthquakes sorted by magnitude
-- 🖱️ **Hover Details**: Hover over spikes for quick information
-- 🔄 **Real-time Data**: Fetches latest earthquake data from USGS
+## What it shows
 
-## Getting Started
+- A textured Earth that can be rotated and zoomed
+- Spikes for clustered events: height is frequency, color is average magnitude
+- Hover text on a spike, and a click-through with the place name
+- A list of events sorted by magnitude
 
-### Prerequisites
+Data comes from the USGS Earthquake Hazards Program, the past 30 days of magnitude 4.5 and above: [USGS GeoJSON feed](https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_month.geojson).
 
-- Node.js (v16 or higher)
-- npm
+## Stack
 
-### Installation
+- Three.js for the WebGL scene
+- GSAP for motion
+- Vite for the dev server and production build
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+## Run locally
 
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
+Node.js 16 or newer.
 
-4. Open your browser to the URL shown in the terminal (typically `http://localhost:5173`)
+```bash
+npm install
+npm run dev
+```
 
-### Build for Production
+The terminal prints a local URL, usually http://localhost:5173.
 
 ```bash
 npm run build
+npm run preview
 ```
 
-## Usage
+## Controls
 
-- **Rotate**: Click and drag to rotate the globe
-- **Zoom**: Scroll to zoom in/out
-- **Hover**: Hover over spikes to see quick information
-- **Click**: Click on spikes to see detailed location information
-- **Browse**: Use the left sidebar to browse and navigate to specific earthquakes
-
-## Data Source
-
-Earthquake data is provided by the [USGS Earthquake Hazards Program](https://earthquake.usgs.gov/), showing earthquakes of magnitude 4.5+ from the last 30 days.
-
-## Technologies Used
-
-- **Three.js**: 3D graphics and WebGL rendering
-- **GSAP**: Animations and transitions
-- **Vite**: Build tool and development server
+- Drag to rotate
+- Scroll to zoom
+- Hover a spike for a short readout
+- Click a spike for the place name
+- Use the sidebar list to jump to an event
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-This project uses several open-source libraries and data sources. See [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md) for a complete list of contributors and resources.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
+MIT. See [LICENSE](LICENSE). Third-party libraries and data sources are listed in [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md).
